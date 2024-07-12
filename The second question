@@ -1,0 +1,44 @@
+import re
+
+def reg_search(text, regex_list):
+    # 先定义一个空列表,用来存储匹配成功的数据
+    results = []
+    # 遍历写好的正则
+    for regex_dict in regex_list:
+
+        result_dict = {}
+        # 遍历正则的键和值
+        for key, pattern in regex_dict.items():
+            # 匹配所有成功的赋值给matches
+            matches = re.findall(pattern, text)
+            if matches:
+                # 判断类型 转成列表
+                if isinstance(matches[0], tuple):
+
+                    result_dict[key] = list(matches[0])
+                else:
+                    result_dict[key] = matches[0]
+
+        results.append(result_dict)
+
+    return results
+
+# 文本
+text = '''  
+标的证券：本期发行的证券为可交换为发行人所持中国长江电力股份有限公司股票（股票代码：600900.SH，股票简称：长江电力）的可交换公司债券。  
+换股期限：本期可交换公司债券换股期限自可交换公司债券发行结束之日满 12 个月后的第一个交易日起至可交换债券到期日止，即 2023 年 6 月 2 日至 2027 年 6 月 1 日止。  
+'''
+
+# 正则表达式列表
+regex_list = [
+    {
+        '标的证券': r'股票代码：(\d+\.\w+)',
+        '换股期限': r'(\d{4} 年 \d{1,2} 月 \d{1,2} 日).+?(\d{4} 年 \d{1,2} 月 \d{1,2} 日)'
+    }
+]
+
+# 执行匹配函数
+matched_results = reg_search(text, regex_list)
+
+# 输出结果
+print(matched_results)
