@@ -1,40 +1,62 @@
 import requests
-import time,random
+import time
+import random
 import csv
+
+# 随机等待时间，模拟人为操作
 time1 = random.randint(2, 6)
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-           "Cookie": "AlteonP10=Bmr+VCw/F6wnK2ROxQGSbg$$; apache=bbfde8c184f3e1c6074ffab28a313c87; ags=2a1ba4d47b619c011c19c1cc4b3c0c32; _ulta_id.ECM-Prod.ccc4=7808d79d8365d29f; _ulta_ses.ECM-Prod.ccc4=bd028f5669925819"}
 
+# 请求头，包括 User-Agent 和 Cookie
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+    'Cookie': 'AlteonP10=Bmr+VCw/F6wnK2ROxQGSbg$$; apache=bbfde8c184f3e1c6074ffab28a313c87; ags=2a1ba4d47b619c011c19c1cc4b3c0c32; _ulta_id.ECM-Prod.ccc4=7808d79d8365d29f; _ulta_ses.ECM-Prod.ccc4=bd028f5669925819'
+}
 
+# 请求的 URL
 url = "https://iftp.chinamoney.com.cn/ags/ms/cm-u-bond-md/BondMarketInfoListEN"
-with open(f"data.csv", 'w', encoding='utf-8') as csvfile:
-    fieldnames = ['ISIN', 'Bond Code', 'Issuer', 'Bond Type', 'Issue Date', 'Latest Rating']
+
+# CSV 文件名和字段名
+csv_filename = 'data.csv'
+fieldnames = ['ISIN', 'Bond Code', 'Issuer', 'Bond Type', 'Issue Date', 'Latest Rating']
+
+# 打开 CSV 文件，写入表头
+with open(csv_filename, 'w', encoding='utf-8', newline='') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
-for j in range(8):
-    res = requests.post(url=url, headers=headers,data= {
-    "pageNo": j + 1,
-    "pageSize": "15",
-    "isin": "",
-    "bondCode": "",
-    "issueEnty": "",
-    "bondType": "100001",
-    "couponType": "",
-    "issueYear": "2023",
-    "rtngShrt": "",
-    "bondSpclPrjctVrty": ""
-    })
-    res = res.json()
-    with open(f"data.csv", "a", encoding='utf-8') as csvfile:
+
+# 循环请求多页数据
+for page_num in range(8):
+    # 构造 POST 请求的数据
+    data = {
+        'pageNo': page_num + 1,
+        'pageSize': '15',
+        'isin': '',
+        'bondCode': '',
+        'issueEnty': '',
+        'bondType': '100001',  # 债券类型
+        'couponType': '',
+        'issueYear': '2023',  # 发行年份
+        'rtngShrt': '',
+        'bondSpclPrjctVrty': ''
+    }
+
+    # 发送 POST 请求
+    res = requests.post(url=url, headers=headers, data=data)
+    res_json = res.json()
+
+    # 打开 CSV 文件，追加写入数据
+    with open(csv_filename, 'a', encoding='utf-8', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        for i in res["data"]["resultList"]:
+        for item in res_json['data']['resultList']:
             row = {
-                'ISIN': i['isin'],
-                'Bond Code': i['bondCode'],
-                'Issuer': i['entyFullName'],
-                'Bond Type': i['bondType'],
-                'Issue Date': i['issueStartDate'],
-                'Latest Rating': ''
+                'ISIN': item['isin'],
+                'Bond Code': item['bondCode'],
+                'Issuer': item['entyFullName'],
+                'Bond Type': item['bondType'],
+                'Issue Date': item['issueStartDate'],
+                'Latest Rating': ''  # 最新评级字段暂时为空
             }
             writer.writerow(row)
+
+    # 随机等待一段时间，避免请求过于频繁
     time.sleep(time1)
